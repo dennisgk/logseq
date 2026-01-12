@@ -134,11 +134,15 @@
 
 
 (defn import-estorage []
-  (-> (js/Promise.resolve (repo-handler/get-repos))
+  (-> (js/Promise.resolve (js/window.disableSpaRouting))
+      (.then (fn [] (repo-handler/get-repos)))
       (.then (fn [repos]
-               (doseq [repo (js->clj repos)]
-                 (repo-handler/remove-repo! repo))
-               nil))
+        (when (seq repos)
+          (throw (js/Error. "Repos is not empty")))
+      ))
+               ;(doseq [repo (js->clj repos)]
+               ;  (repo-handler/remove-repo! repo))
+               ;nil))
 
       ;; getNewRepos might be sync OR async; normalize
       (.then (fn []

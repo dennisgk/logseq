@@ -91,7 +91,7 @@
 
      [:div.flex.flex-col.gap-4.ml-1
       [:div
-       [:a.font-medium {:on-click #(export/export-repos-to-estorage!)}
+       [:a.font-medium {:on-click #(export/export-repos-to-estorage! current-repo)}
         "Export to EStorage"]
        [:p.text-sm.opacity-70.mb-0 "Export to EStorage"]]
 

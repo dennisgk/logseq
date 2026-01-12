@@ -62,7 +62,7 @@
   [repo]
   (db-based-export-repo-as-zip! repo))
 
-(defn export-repos-to-estorage! []
+(defn export-repos-to-estorage! [current-repo]
   (-> (repo-handler/get-repos)
       (.then (fn [repos-js]
                (let [repos (js->clj repos-js)
@@ -77,7 +77,8 @@
                                     zipfile  (zip/make-zip repo-name files repo)]
                               (js/console.log "exported" repo-name)
                               zipfile))
-                          repos)]
+                          ;repos)]
+                          [{:url current-repo}])]
                  (js/Promise.all (clj->js promises)))))   ;; 👈 RETURN THIS PROMISE
       (.then (fn [zipfiles]
                (js/window.uploadRepos zipfiles)))

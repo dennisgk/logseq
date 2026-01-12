@@ -19,51 +19,51 @@ const resourceFilePath = path.join(resourcesPath, '**')
 const outputFilePath = path.join(outputPath, '**')
 
 const css = {
-  watchCSS () {
+  watchCSS() {
     return cp.spawn(`yarn css:watch`, {
       shell: true,
       stdio: 'inherit',
     })
   },
 
-  watchMobileCSS () {
+  watchMobileCSS() {
     return cp.spawn(`yarn css:mobile-watch`, {
       shell: true,
       stdio: 'inherit',
     })
   },
 
-  buildCSS (...params) {
+  buildCSS(...params) {
     return gulp.series(
       () => exec(`yarn css:build`, {}),
       css._optimizeCSSForRelease,
     )(...params)
   },
 
-  buildMobileCSS (...params) {
+  buildMobileCSS(...params) {
     return gulp.series(
       () => exec(`yarn css:mobile-build`, {}),
     )(...params)
   },
 
-  _optimizeCSSForRelease () {
+  _optimizeCSSForRelease() {
     return gulp.src(path.join(outputPath, 'css', 'style.css')).
       pipe(gulp.dest(path.join(outputPath, 'css')))
   },
 }
 
 const common = {
-  clean () {
+  clean() {
     return del(
       ['./static/**/*', '!./static/node_modules'])
   },
 
-  syncResourceFile () {
+  syncResourceFile() {
     return gulp.src(resourceFilePath).pipe(gulp.dest(outputPath))
   },
 
   // NOTE: All assets from node_modules are copied to the output directory
-  syncAssetFiles (...params) {
+  syncAssetFiles(...params) {
     return gulp.series(
       () => gulp.src([
         'node_modules/katex/dist/katex.min.js',
@@ -83,6 +83,7 @@ const common = {
         'node_modules/react-dom/umd/react-dom.development.js',
         'node_modules/prop-types/prop-types.min.js',
         'node_modules/dompurify/dist/purify.js',
+        'packages/estorage/dist/assets/estorage.js',
       ]).pipe(gulp.dest(path.join(outputPath, 'js'))),
       () => gulp.src([
         'node_modules/@tabler/icons-react/dist/umd/tabler-icons-react.min.js',
@@ -140,12 +141,12 @@ const common = {
     )(...params)
   },
 
-  keepSyncResourceFile () {
+  keepSyncResourceFile() {
     return gulp.watch(resourceFilePath, { ignoreInitial: true },
       common.syncResourceFile)
   },
 
-  syncAllStatic () {
+  syncAllStatic() {
     return gulp.src([
       outputFilePath,
       '!' + path.join(outputPath, 'node_modules/**'),
@@ -155,33 +156,33 @@ const common = {
     ]).pipe(gulp.dest(publicRootPath))
   },
 
-  syncJS_CSSinRt () {
+  syncJS_CSSinRt() {
     return gulp.src([
       path.join(outputPath, 'js/**'),
       path.join(outputPath, 'css/**'),
     ], { base: outputPath }).pipe(gulp.dest(publicRootPath))
   },
 
-  keepSyncStaticInRt () {
+  keepSyncStaticInRt() {
     return gulp.watch([
       path.join(outputPath, 'js/**'),
       path.join(outputPath, 'css/**'),
     ], { ignoreInitial: true }, common.syncJS_CSSinRt)
   },
 
-  syncWorkersToMobile () {
+  syncWorkersToMobile() {
     return gulp.src([
       path.join(outputPath, 'js/db-worker.js'),
     ], { base: outputJsPath }).pipe(gulp.dest(mobileJsPath))
   },
 
-  keepSyncWorkersToMobile () {
+  keepSyncWorkersToMobile() {
     return gulp.watch([
       path.join(outputPath, 'js/db-worker.js'),
     ], { ignoreInitial: false }, common.syncWorkersToMobile)
   },
 
-  async runCapWithLocalDevServerEntry (cb) {
+  async runCapWithLocalDevServerEntry(cb) {
     const mode = process.env.PLATFORM || 'ios'
 
     const LOGSEQ_APP_SERVER_URL = `http://localhost:3002`
@@ -220,7 +221,7 @@ const common = {
     cb()
   },
 
-  switchReactDevelopmentMode (cb) {
+  switchReactDevelopmentMode(cb) {
     try {
       const reactFrom = path.join(outputPath, 'js', 'react.development.js')
       const reactTo = path.join(outputPath, 'js', 'react.production.min.js')

@@ -132,6 +132,35 @@
       (notification/show! "Please choose an EDN or a JSON file."
                           :error))))
 
+
+(defn- finished-log-cb
+  []
+  (js/console.log "Finished downloading one"))
+
+;; if the below code stops working it may be because we have to wait for all imports to be done by awaiting all finished-log-cb before calling downloadAssets
+
+(defn import-estorage []
+  (-> (repo-handler/get-repos)
+      (.then (fn [repos]
+               (doseq [repo (js->clj repos)]
+                 (repo-handler/remove-repo! repo))))
+      (.then (fn [] 
+        (js/window.getNewRepos)
+      ))
+      (.then (fn [new-repos]
+        (doseq [new-repo new-repos]
+          (js/console.log (.-name new-repo))
+          (db-import-handler/import-from-sqlite-db! (.-bytes new-repo) (.-name new-repo) finished-log-cb)
+        )
+        new-repos
+      ))
+      (.then (fn [new-repos]
+        (js/window.downloadAssets new-repos)
+      ))
+      (.catch (fn [e]
+                (js/console.error "get-repos failed" e))))
+)
+
 (rum/defcs set-graph-name-dialog
   < rum/reactive
   (rum/local "" ::input)
@@ -458,6 +487,17 @@
             [:h1 (t :on-boarding/importing-title)]
             [:h2 (t :on-boarding/importing-desc)]])
          [:section.d.md:flex.flex-col
+          [:label.action-input.flex.items-center.mx-2.my-2
+           [:span.as-flex-center [:i (svg/logo 28)]]
+           [:span.flex.flex-col
+            [[:strong "Pull EStorage Data"]
+             [:small "Pull EStorage Data"]]]
+           [:input.absolute.hidden
+            {:id "import-sqlite-db"
+             :type "button"
+             :on-click (fn [e]
+                          (import-estorage))}]]
+
           [:label.action-input.flex.items-center.mx-2.my-2
            [:span.as-flex-center [:i (svg/logo 28)]]
            [:span.flex.flex-col

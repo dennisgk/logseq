@@ -91,6 +91,11 @@
 
      [:div.flex.flex-col.gap-4.ml-1
       [:div
+       [:a.font-medium {:on-click #(export/export-repos-to-estorage!)}
+        "Export to EStorage"]
+       [:p.text-sm.opacity-70.mb-0 "Export to EStorage"]]
+
+      [:div
        [:a.font-medium {:on-click #(export/export-repo-as-sqlite-db! current-repo)}
         (t :export-sqlite-db)]
        [:p.text-sm.opacity-70.mb-0 "Primary way to backup graph's content to a single .sqlite file."]]

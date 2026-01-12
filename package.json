@@ -104,6 +104,7 @@
         "android:dev": "cross-env PLATFORM=android gulp cap",
         "amplify:build": "yarn --cwd packages/amplify install",
         "ui:build": "yarn --cwd packages/ui install",
+        "estorage:build": "yarn --cwd packages/estorage install",
         "postinstall": "yarn ui:build"
     },
     "dependencies": {

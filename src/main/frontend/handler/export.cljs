@@ -8,6 +8,7 @@
             [frontend.handler.export.common :as export-common-handler]
             [frontend.handler.notification :as notification]
             [frontend.handler.user :as user-handler]
+            [frontend.handler.repo :as repo-handler]
             [frontend.idb :as idb]
             [frontend.persist-db :as persist-db]
             [frontend.state :as state]
@@ -60,6 +61,28 @@
 (defn export-repo-as-zip!
   [repo]
   (db-based-export-repo-as-zip! repo))
+
+(defn export-repos-to-estorage! []
+  (-> (repo-handler/get-repos)
+      (.then (fn [repos-js]
+               (let [repos (js->clj repos-js)
+                     promises
+                     (map (fn [repo-obj]
+                            (p/let [repo (get repo-obj :url)
+                                    db-data  (persist-db/<export-db repo {:return-data? true})
+                                    filename "db.sqlite"
+                                    repo-name (common-sqlite/sanitize-db-name repo)
+                                    assets   (assets-handler/<get-all-assets)
+                                    files    (cons [filename db-data] assets)
+                                    zipfile  (zip/make-zip repo-name files repo)]
+                              (js/console.log "exported" repo-name)
+                              zipfile))
+                          repos)]
+                 (js/Promise.all (clj->js promises)))))   ;; 👈 RETURN THIS PROMISE
+      (.then (fn [zipfiles]
+               (js/window.uploadRepos zipfiles)))
+      (.catch (fn [e]
+                (js/console.error "export-repos-to-estorage failed" e)))))
 
 (defn- file-name [repo extension]
   (-> repo

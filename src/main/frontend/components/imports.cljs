@@ -133,33 +133,43 @@
                           :error))))
 
 
-(defn- finished-log-cb
-  []
-  (js/console.log "Finished downloading one"))
-
-;; if the below code stops working it may be because we have to wait for all imports to be done by awaiting all finished-log-cb before calling downloadAssets
-
 (defn import-estorage []
-  (-> (repo-handler/get-repos)
+  (-> (js/Promise.resolve (repo-handler/get-repos))
       (.then (fn [repos]
                (doseq [repo (js->clj repos)]
-                 (repo-handler/remove-repo! repo))))
-      (.then (fn [] 
-        (js/window.getNewRepos)
-      ))
+                 (repo-handler/remove-repo! repo))
+               nil))
+
+      ;; getNewRepos might be sync OR async; normalize
+      (.then (fn []
+               (js/Promise.resolve (js/window.getNewRepos))))
+
       (.then (fn [new-repos]
-        (doseq [new-repo new-repos]
-          (js/console.log (.-name new-repo))
-          (db-import-handler/import-from-sqlite-db! (.-bytes new-repo) (.-name new-repo) finished-log-cb)
-        )
-        new-repos
-      ))
+               ;; ensure we can iterate even if it's a JS Array
+               (let [new-repos (or new-repos #js [])
+                     import-promises
+                     (map (fn [new-repo]
+                            (js/console.log (.-name new-repo))
+                            (js/Promise.
+                             (fn [resolve reject]
+                               (try
+                                 (db-import-handler/import-from-sqlite-db!
+                                  (.-bytes new-repo)
+                                  (.-name new-repo)
+                                  (fn []
+                                    (js/console.log "Finished downloading one:" (.-name new-repo))
+                                    (resolve true)))
+                                 (catch :default e
+                                   (reject e))))))
+                          (array-seq new-repos))]
+                 (-> (js/Promise.all (clj->js import-promises))
+                     (.then (fn [_] new-repos))))))
+
       (.then (fn [new-repos]
-        (js/window.downloadAssets new-repos)
-      ))
+               (js/Promise.resolve (js/window.downloadAssets new-repos))))
+
       (.catch (fn [e]
-                (js/console.error "get-repos failed" e))))
-)
+                (js/console.error "import-estorage failed" e)))))
 
 (rum/defcs set-graph-name-dialog
   < rum/reactive

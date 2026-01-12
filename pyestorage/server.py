@@ -281,6 +281,9 @@ def get_estorage_root(db_name: str):
         raise HTTPException(404, "DB not found.")
     return JSONResponse(list_dir_level(db_root))
 
+@app.get("/", include_in_schema=False)
+def serve_index():
+    return FileResponse(str(STATIC_DIR / "index.html"))
 
 # Serve /static at / (but note: this can shadow API routes if mounted at "/")
 # Example: ./static/test.png -> GET /test.png
